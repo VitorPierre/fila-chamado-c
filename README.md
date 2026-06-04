@@ -173,7 +173,7 @@ O sistema calcula o proximo ID disponivel automaticamente (maior ID + 1).
 
 ## Autor
 
-Desenvolvido por **Vitor**
+Desenvolvido por **Vitor Pierre e Kawane Santos**
 
 ---
 
