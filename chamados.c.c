@@ -28,6 +28,7 @@ typedef struct Chamado {
     char nome[TAM_NOME];
     char setor[TAM_SETOR];
     char descricao[TAM_DESC];
+    int prioridade;
     struct Chamado *prox;
 } Chamado;
 
@@ -81,6 +82,22 @@ void centralizar(void) {
     }
 }
 
+// Retorna string da prioridade
+const char* get_prioridade_str(int pri) {
+    if (pri == 1) return "BAIXA";
+    if (pri == 2) return "MEDIA";
+    if (pri == 3) return "ALTA";
+    return "DESC";
+}
+
+// Retorna cor da prioridade
+const char* get_prioridade_cor(int pri) {
+    if (pri == 1) return BLUE;
+    if (pri == 2) return YELLOW;
+    if (pri == 3) return RED;
+    return GRAY;
+}
+
 // Inicializa a fila vazia
 void iniciar_fila(Fila *f) {
     f->inicio = NULL;
@@ -89,7 +106,7 @@ void iniciar_fila(Fila *f) {
 }
 
 // Cria um novo chamado na memória
-Chamado *criar_chamado(int id, const char *nome, const char *setor, const char *descricao) {
+Chamado *criar_chamado(int id, const char *nome, const char *setor, const char *descricao, int prioridade) {
     Chamado *no = malloc(sizeof(Chamado));
     if (no == NULL) {
     	centralizar();
@@ -99,28 +116,45 @@ Chamado *criar_chamado(int id, const char *nome, const char *setor, const char *
     
 	no->id = id;
     strncpy(no->nome, nome, TAM_NOME - 1);
-    
 	no->nome[TAM_NOME - 1] = '\0';
+    
     strncpy(no->setor, setor, TAM_SETOR - 1);
-    
 	no->setor[TAM_SETOR - 1] = '\0';
-    strncpy(no->descricao, descricao, TAM_DESC - 1);
     
+    strncpy(no->descricao, descricao, TAM_DESC - 1);
 	no->descricao[TAM_DESC - 1] = '\0';
+    
+    no->prioridade = prioridade;
     no->prox = NULL;
     return no;
 }
 
-// Adiciona chamado no final da fila
+// Adiciona chamado no final da fila (com ordenação por prioridade)
 void enfileirar(Fila *f, Chamado *no) {
     no->prox = NULL;
-    if (f->fim == NULL) {
+    
+    // Se fila vazia ou prioridade MAIOR que o primeiro (3 > 1)
+    if (f->inicio == NULL || no->prioridade > f->inicio->prioridade) {
+        no->prox = f->inicio;
         f->inicio = no;
-        f->fim = no;
-    } else {
-        f->fim->prox = no;
+        if (f->fim == NULL) f->fim = no;
+        f->tamanho++;
+        return;
+    }
+    
+    // Procurar posição correta (prioridade maior vem antes)
+    Chamado *atual = f->inicio;
+    while (atual->prox != NULL && atual->prox->prioridade >= no->prioridade) {
+        atual = atual->prox;
+    }
+    
+    no->prox = atual->prox;
+    atual->prox = no;
+    
+    if (no->prox == NULL) {
         f->fim = no;
     }
+    
     f->tamanho++;
 }
 
@@ -229,19 +263,21 @@ void listar(Fila *f) {
     separador();
     
     centralizar();
-    printf(BOLD "%-4s | %-20s | %-12s | %s \n" RESET, "ID", "NOME", "SETOR", "DESCRICAO");
+    printf(BOLD "%-4s | %-20s | %-12s | %-6s | %s \n" RESET, "ID", "NOME", "SETOR", "PRIOR", "DESCRICAO");
     separador();
     
     while (no != NULL) {
         char desc_truncada[TAM_DESC];
-        strncpy(desc_truncada, no->descricao, 40);
-        desc_truncada[40] = '\0';
-        if (strlen(no->descricao) > 40) {
+        strncpy(desc_truncada, no->descricao, 34);
+        desc_truncada[34] = '\0';
+        if (strlen(no->descricao) > 34) {
             strcat(desc_truncada, "...");
         }
         
+        const char *cor_pri = get_prioridade_cor(no->prioridade);
         centralizar();
-        printf(GREEN "%-4d" RESET " | %-20s | %-12s | %s\n", no->id, no->nome, no->setor, desc_truncada);
+        printf(GREEN "%-4d" RESET " | %-20s | %-12s | %s%-6s%s | %s\n", 
+               no->id, no->nome, no->setor, cor_pri, get_prioridade_str(no->prioridade), RESET, desc_truncada);
         no = no->prox;
     }
     
@@ -254,6 +290,7 @@ void listar_todos(Fila *f) {
     char linha[300];
     int id;
     char nome[TAM_NOME], setor[TAM_SETOR], descricao[TAM_DESC];
+    int prioridade;
     Chamado *no;
     int total_atendidos = 0;
     int total_pendentes = f->tamanho;
@@ -264,20 +301,22 @@ void listar_todos(Fila *f) {
     separador();
     
     centralizar();
-    printf(BOLD "%-4s | %-20s | %-12s | %s \n" RESET, "ID", "NOME", "SETOR", "DESCRICAO");
+    printf(BOLD "%-4s | %-20s | %-12s | %-6s | %s \n" RESET, "ID", "NOME", "SETOR", "PRIOR", "DESCRICAO");
     separador();
     
     no = f->inicio;
     while (no != NULL) {
         char desc_truncada[TAM_DESC];
-        strncpy(desc_truncada, no->descricao, 40);
-        desc_truncada[40] = '\0';
-        if (strlen(no->descricao) > 40) {
+        strncpy(desc_truncada, no->descricao, 34);
+        desc_truncada[34] = '\0';
+        if (strlen(no->descricao) > 34) {
             strcat(desc_truncada, "...");
         }
         
+        const char *cor_pri = get_prioridade_cor(no->prioridade);
         centralizar();
-        printf(GREEN "%-4d" RESET " | %-20s | %-12s | %s\n", no->id, no->nome, no->setor, desc_truncada);
+        printf(GREEN "%-4d" RESET " | %-20s | %-12s | %s%-6s%s | %s\n", 
+               no->id, no->nome, no->setor, cor_pri, get_prioridade_str(no->prioridade), RESET, desc_truncada);
         no = no->prox;
     }
     
@@ -292,16 +331,18 @@ void listar_todos(Fila *f) {
     if (arq_atendidos != NULL) {
         while (fgets(linha, sizeof(linha), arq_atendidos) != NULL) {
             linha[strcspn(linha, "\n")] = '\0';
-            if (sscanf(linha, "%d;%79[^;];%49[^;];%119[^\n]", &id, nome, setor, descricao) == 4) {
+            if (sscanf(linha, "%d;%79[^;];%49[^;];%119[^;];%d", &id, nome, setor, descricao, &prioridade) == 5) {
                 char desc_truncada[TAM_DESC];
-                strncpy(desc_truncada, descricao, 40);
-                desc_truncada[40] = '\0';
-                if (strlen(descricao) > 40) {
+                strncpy(desc_truncada, descricao, 34);
+                desc_truncada[34] = '\0';
+                if (strlen(descricao) > 34) {
                     strcat(desc_truncada, "...");
                 }
                 
+                const char *cor_pri = get_prioridade_cor(prioridade);
                 centralizar();
-                printf(YELLOW "%-4d" RESET " | %-20s | %-12s | %s\n", id, nome, setor, desc_truncada);
+                printf(YELLOW "%-4d" RESET " | %-20s | %-12s | %s%-6s%s | %s\n", 
+                       id, nome, setor, cor_pri, get_prioridade_str(prioridade), RESET, desc_truncada);
                 total_atendidos++;
             }
         }
@@ -321,6 +362,8 @@ void listar_todos(Fila *f) {
 // Abre um novo chamado com validação
 void abrir_chamado(Fila *f) {
     char nome[TAM_NOME], setor[TAM_SETOR], descricao[TAM_DESC];
+    int prioridade;
+    
     printf("\n");
     centralizar();
     printf(CYAN BOLD "	    	 === ABRIR CHAMADO ===\n" RESET);
@@ -359,7 +402,17 @@ void abrir_chamado(Fila *f) {
         return;
     }
     
-    enfileirar(f, criar_chamado(proximo_id(f), nome, setor, descricao));
+    centralizar();
+    printf("Prioridade (1-Baixa, 2-Media, 3-Alta): ");
+    if (scanf("%d", &prioridade) != 1) {
+        prioridade = 2;
+    }
+    if (prioridade < 1 || prioridade > 3) {
+        prioridade = 2;
+    }
+    limpar_buffer();
+    
+    enfileirar(f, criar_chamado(proximo_id(f), nome, setor, descricao, prioridade));
     
     centralizar();
     printf(GREEN BOLD "[SUCESSO] Chamado #%d aberto com sucesso!\n" RESET, proximo_id(f) - 1);
@@ -386,11 +439,14 @@ void atender_proximo(Fila *f) {
     printf(BOLD "Setor:" RESET " %s\n", no->setor);
     centralizar();
     printf(BOLD "Descricao:" RESET " %s\n", no->descricao);
+    centralizar();
+    const char *cor_pri = get_prioridade_cor(no->prioridade);
+    printf(BOLD "Prioridade:" RESET " %s%s%s\n", cor_pri, get_prioridade_str(no->prioridade), RESET);
     separador();
     
     FILE *arq_atendidos = fopen("atendidos.txt", "a");
     if (arq_atendidos != NULL) {
-        fprintf(arq_atendidos, "%d;%s;%s;%s\n", no->id, no->nome, no->setor, no->descricao);
+        fprintf(arq_atendidos, "%d;%s;%s;%s;%d\n", no->id, no->nome, no->setor, no->descricao, no->prioridade);
         fclose(arq_atendidos);
     }
     
@@ -435,6 +491,9 @@ void buscar_por_id(Fila *f) {
             printf(BOLD "Setor:" RESET " %s\n", no->setor);
             centralizar();
             printf(BOLD "Descricao:" RESET " %s\n", no->descricao);
+            centralizar();
+            const char *cor_pri = get_prioridade_cor(no->prioridade);
+            printf(BOLD "Prioridade:" RESET " %s%s%s\n", cor_pri, get_prioridade_str(no->prioridade), RESET);
             separador();
             pausar();
             return;
@@ -459,7 +518,7 @@ void salvar(Fila *f, const char *nome_arquivo) {
     
     no = f->inicio;
     while (no != NULL) {
-        fprintf(arq, "%d;%s;%s;%s\n", no->id, no->nome, no->setor, no->descricao);
+        fprintf(arq, "%d;%s;%s;%s;%d\n", no->id, no->nome, no->setor, no->descricao, no->prioridade);
         no = no->prox;
     }
     
@@ -474,6 +533,7 @@ void carregar(Fila *f, const char *nome_arquivo) {
     char linha[300];
     int id;
     char nome[TAM_NOME], setor[TAM_SETOR], descricao[TAM_DESC];
+    int prioridade;
     
     if (arq == NULL) {
         return;
@@ -482,8 +542,8 @@ void carregar(Fila *f, const char *nome_arquivo) {
     int carregados = 0;
     while (fgets(linha, sizeof(linha), arq) != NULL) {
         linha[strcspn(linha, "\n")] = '\0';
-        if (sscanf(linha, "%d;%79[^;];%49[^;];%119[^\n]", &id, nome, setor, descricao) == 4) {
-            enfileirar(f, criar_chamado(id, nome, setor, descricao));
+        if (sscanf(linha, "%d;%79[^;];%49[^;];%119[^;];%d", &id, nome, setor, descricao, &prioridade) == 5) {
+            enfileirar(f, criar_chamado(id, nome, setor, descricao, prioridade));
             carregados++;
         }
     }
