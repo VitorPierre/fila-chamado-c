@@ -72,7 +72,7 @@ id;nome;setor;descricao
 ## Como Compilar
 
 ### GCC (Linux/Mac/MinGW)
-gcc main.c -o sistema_chamados
+gcc main.c -o chamados.c
 
 ### Dev-C++
 1. Abra o arquivo .c no Dev-C++
@@ -83,10 +83,10 @@ gcc main.c -o sistema_chamados
 ## Como Executar
 
 ### Windows
-sistema_chamados.exe
+chamados.exe
 
 ### Linux / Mac
-./sistema_chamados
+./chamados
 
 ---
 
@@ -173,7 +173,7 @@ O sistema calcula o proximo ID disponivel automaticamente (maior ID + 1).
 
 ## Autor
 
-Desenvolvido por **Vitor**
+Desenvolvido por **Vitor Pierre e Kawane Santos**
 
 ---
 
