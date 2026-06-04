@@ -98,7 +98,7 @@ id;nome;setor;descricao;prioridade
 
 ### GCC (Linux/Mac/MinGW)
 ```bash
-gcc main.c -o sistema_chamados
+gcc chamados.c -o sistema_chamados
 ```
 
 ### Dev-C++
